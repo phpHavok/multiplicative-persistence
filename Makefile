@@ -1,10 +1,11 @@
 CCFLAGS := -ansi -Wall -pedantic
 LDFLAGS := -lgmp
+TARGET := mp-search
 
-mp-search: mp-search.c
+$(TARGET): $(TARGET).c
 	gcc $< $(CCFLAGS) $(LDFLAGS) -o $@
 
 clean:
-	rm -f mp-search
+	rm -f $(TARGET)
 
 .PHONY: clean
