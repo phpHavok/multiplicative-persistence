@@ -13,7 +13,7 @@
 /**
  * How often should state be dumped in seconds?
  */
-#define DUMP_STATE_INTERVAL 1
+#define DUMP_STATE_INTERVAL 60
 
 /**
  * Application state: stored globally so that it can be dumped on exit.
