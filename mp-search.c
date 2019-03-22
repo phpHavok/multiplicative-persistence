@@ -11,6 +11,11 @@
 #define BUFFER_SZ 1024
 
 /**
+ * How often should state be dumped in seconds?
+ */
+#define DUMP_STATE_INTERVAL 1
+
+/**
  * Application state: stored globally so that it can be dumped on exit.
  */
 static char buffer[BUFFER_SZ];
@@ -18,6 +23,7 @@ static int digits = 0;
 static int d = 0;
 static char min = '0';
 static mpz_t acc;
+volatile static sig_atomic_t should_dump_state = 0;
 
 /**
  * Generator callback function pointer which can check generated integers.
@@ -85,19 +91,8 @@ static void generate(char * buffer, int * digits, int * d, char * min,
     }
 }
 
-static int checker(const char * x, void * data)
-{
-    /*static int checks = 0;*/
-    int p = check(x, (mpz_t *) data);
-    printf("Checker for %s is %d\n", x, p);
-    /*checks++;*/
-    /*return checks >= 1000;*/
-    return 0;
-}
-
 static void dump_state(void)
 {
-    mpz_clear(acc);
     if (d < 0) {
         printf("Done!\n");
     } else {
@@ -107,8 +102,26 @@ static void dump_state(void)
 
 static void handle_signals(int signal)
 {
-    /* Exit cleanly so that atexit handlers are called. */
-    exit(2);
+    if (SIGALRM == signal) {
+        should_dump_state = 1;
+    } else {
+        /* Exit cleanly so that atexit handlers are called. */
+        mpz_clear(acc);
+        exit(2);
+    }
+}
+
+static int checker(const char * x, void * data)
+{
+    int p = check(x, (mpz_t *) data);
+    /*printf("Checker for %s is %d\n", x, p);*/
+    if (should_dump_state) {
+        dump_state();
+        should_dump_state = 0;
+        signal(SIGALRM, handle_signals);
+        alarm(DUMP_STATE_INTERVAL);
+    }
+    return 0;
 }
 
 int main(int argc, char * argv[])
@@ -122,8 +135,9 @@ int main(int argc, char * argv[])
     /* Initialize state, or accept defaults. */
     if (argc >= 2) {
         digits = atoi(argv[1]);
-        if (digits < 0) {
-            fprintf(stderr, "Invalid number of digits: %d\n", digits);
+        if (digits < 0 || digits >= BUFFER_SZ) {
+            fprintf(stderr, "Invalid number of digits (0-%d): %d\n",
+                    BUFFER_SZ - 1, digits);
             return 1;
         }
     }
@@ -166,6 +180,9 @@ int main(int argc, char * argv[])
     signal(SIGQUIT, handle_signals);
     signal(SIGKILL, handle_signals);
     signal(SIGHUP, handle_signals);
+    /* Setup recurring timer to dump state. */
+    signal(SIGALRM, handle_signals);
+    alarm(DUMP_STATE_INTERVAL);
     /* Run the generator with the initialized state. */
     mpz_init(acc);
     generate(buffer, &digits, &d, &min, checker, &acc);
