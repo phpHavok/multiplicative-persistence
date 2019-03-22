@@ -36,25 +36,6 @@ static int check(const char * x, mpz_t * acc)
     return iteration;
 }
 
-#ifdef GENERATE_RECURSIVE
-/**
- * Generate candidate integers recursively.
- */
-static void generate(char * buffer, int digits, int d, char min,
-        generator_cb cb, void * data)
-{
-    char i = 0;
-    if (d >= digits) {
-        buffer[d] = '\0';
-        cb(buffer, data);
-        return;
-    }
-    for (i = min; i <= '9'; i++) {
-        buffer[d] = i;
-        generate(buffer, digits, d + 1, i);
-    }
-}
-#else
 /**
  * Generate candidate integers iteratively.
  */
@@ -82,7 +63,6 @@ static void generate(char * buffer, int digits, int d, char min,
         }
     }
 }
-#endif
 
 void checker(const char * x, void * data)
 {
