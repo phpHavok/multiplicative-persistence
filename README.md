@@ -1,6 +1,8 @@
 # Multiplicative Persistence Search
 
-A search algorithm for finding integers with multiplicative persistence.
+A search algorithm for finding integers with multiplicative persistence. This is
+a work in progress, and the algorithm could definitely be improved to skip lots
+of obviously bad integers.
 
 ## Building and Running
 
