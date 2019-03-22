@@ -23,6 +23,46 @@ static int check(const char * x, mpz_t * acc)
     return iteration;
 }
 
+#ifdef GEN_RECURSIVE
+static void generate(char * buffer, int digits, int d, char min)
+{
+    char i = 0;
+    if (d >= digits) {
+        buffer[d] = '\0';
+        printf("Terminating recursion: %s\n", buffer);
+        return;
+    }
+    for (i = min; i <= '9'; i++) {
+        buffer[d] = i;
+        generate(buffer, digits, d + 1, i);
+    }
+}
+#else
+static void generate(char * buffer, int digits, int d, char min)
+{
+    char i = 0;
+    while (1) {
+        if (d >= digits) {
+            buffer[d] = '\0';
+            printf("Terminating recursion: %s\n", buffer);
+            do {
+                d -= 1;
+                if (d < 0) {
+                    return;
+                }
+                min = buffer[d] + 1;
+            } while (min > '9');
+        }
+        for (i = min; i <= '9'; i++) {
+            buffer[d] = i;
+            d += 1;
+            min = i;
+            break;
+        }
+    }
+}
+#endif
+
 /**
  * Pairs not to include for efficiency:
  * 2x2=4
@@ -34,6 +74,7 @@ static int check(const char * x, mpz_t * acc)
  */
 int main(int argc, char * argv[])
 {
+    char buffer[BUFFER_SZ];
     mpz_t acc;
     int p = 0;
     const char * test = "277777788888899";
@@ -42,6 +83,7 @@ int main(int argc, char * argv[])
         return 1;
     }
     mpz_init(acc);
+    generate(buffer, 6, 0, '0');
     p = check(test, &acc);
     printf("Persistence of %s is %d\n", test, p);
     mpz_clear(acc);
