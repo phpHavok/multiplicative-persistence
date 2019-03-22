@@ -93,10 +93,8 @@ static void generate(char * buffer, int * digits, int * d, char * min,
 
 static void dump_state(void)
 {
-    if (d < 0) {
-        printf("Done!\n");
-    } else {
-        printf("State: %d \"%s\" %d %c\n", digits, buffer, d, min);
+    if (d >= 0) {
+        fprintf(stderr, "STATE: %d \"%s\" %d %c\n", digits, buffer, d, min);
     }
 }
 
@@ -114,6 +112,9 @@ static void handle_signals(int signal)
 static int checker(const char * x, void * data)
 {
     int p = check(x, (mpz_t *) data);
+    if (p > 11) {
+        printf("FOUND: (p=%d): %s\n", p, x);
+    }
     /*printf("Checker for %s is %d\n", x, p);*/
     if (should_dump_state) {
         dump_state();
@@ -171,7 +172,8 @@ int main(int argc, char * argv[])
             return 1;
         }
     }
-    printf("Initialized state: digits = %d, buffer = \"%s\", d = %d, min = %c\n",
+    fprintf(stderr,
+            "Initialized state: digits = %d, buffer = \"%s\", d = %d, min = %c\n",
             digits, buffer, d, min);
     /* Handle exit conditions. */
     atexit(dump_state);
