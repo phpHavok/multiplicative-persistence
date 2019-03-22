@@ -1,7 +1,9 @@
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <gmp.h>
+#include <signal.h>
 
 /**
  * The largest supported integer may have (BUFFER_SZ - 1) digits.
@@ -83,7 +85,7 @@ static void generate(char * buffer, int * digits, int * d, char * min,
     }
 }
 
-int checker(const char * x, void * data)
+static int checker(const char * x, void * data)
 {
     /*static int checks = 0;*/
     int p = check(x, (mpz_t *) data);
@@ -93,7 +95,7 @@ int checker(const char * x, void * data)
     return 0;
 }
 
-void dump_state(void)
+static void dump_state(void)
 {
     mpz_clear(acc);
     if (d < 0) {
@@ -101,6 +103,12 @@ void dump_state(void)
     } else {
         printf("State: %d \"%s\" %d %c\n", digits, buffer, d, min);
     }
+}
+
+static void handle_signals(int signal)
+{
+    /* Exit cleanly so that atexit handlers are called. */
+    exit(2);
 }
 
 int main(int argc, char * argv[])
@@ -151,7 +159,13 @@ int main(int argc, char * argv[])
     }
     printf("Initialized state: digits = %d, buffer = \"%s\", d = %d, min = %c\n",
             digits, buffer, d, min);
+    /* Handle exit conditions. */
     atexit(dump_state);
+    signal(SIGINT, handle_signals);
+    signal(SIGTERM, handle_signals);
+    signal(SIGQUIT, handle_signals);
+    signal(SIGKILL, handle_signals);
+    signal(SIGHUP, handle_signals);
     /* Run the generator with the initialized state. */
     mpz_init(acc);
     generate(buffer, &digits, &d, &min, checker, &acc);
